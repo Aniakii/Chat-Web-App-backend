@@ -4,6 +4,6 @@
     {
         public string Username { get; set; } = string.Empty;
         public string ChatRoomName { get; set; } = string.Empty;
-        public int ChatRoomId { get; set; } = -1;
+        public int ChatRoomId { get; set; }
     }
 }

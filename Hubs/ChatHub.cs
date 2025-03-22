@@ -11,51 +11,84 @@ namespace FormulaOne.ChatService.Hubs
         private readonly SharedDb _sharedDb;
 
         public ChatHub(SharedDb sharedDb) => _sharedDb = sharedDb;
-        public async Task JoinChat(UserConnection connection)
-        {
-            await Clients.All.SendAsync("ReceiveMessage", "admin", $"{connection.Username} has joined");
-        }
 
-        public async Task CreateChat(UserConnection connection)
+
+        public async Task<ChatRoom?> CreateChat(UserConnection connection)
         {
-            int nextId;
-            if (_sharedDb.chatRooms.IsEmpty)
+
+            if (string.IsNullOrWhiteSpace(connection.ChatRoomName))
             {
-                nextId = 0;
+                throw new HubException("EMPTY_ROOM_NAME");
             }
-            else
-            {
-                nextId = _sharedDb.chatRooms.Last().Value.Id + 1;
-            }
+
+            Console.WriteLine($"User {connection.Username} próbuje utworzyć pokój");
+
+            int nextId = _sharedDb.chatRooms.IsEmpty ? 1 : _sharedDb.chatRooms.Keys.Max() + 1;
 
             var newChatRoom = new ChatRoom(nextId, connection.ChatRoomName);
 
-            // Używamy TryAdd, aby uniknąć nadpisywania istniejącego klucza
-            if (_sharedDb.chatRooms.TryAdd(connection.ChatRoomName, newChatRoom))
+            if (_sharedDb.chatRooms.TryAdd(nextId, newChatRoom))
             {
-                await Clients.All.SendAsync("ReceiveMessage", "admin", $"{connection.Username} created chat {connection.ChatRoomName}");
+                connection.ChatRoomId = nextId;
+
+                await Groups.AddToGroupAsync(Context.ConnectionId, connection.ChatRoomId.ToString());
+
+                _sharedDb.connections[Context.ConnectionId] = connection;
+
+                Console.WriteLine($"User {connection.Username} dołączył do nowo utworzonego pokoju {connection.ChatRoomId}");
+
+                await Clients.Group(connection.ChatRoomId.ToString()).SendAsync("ReceiveMessage", "admin", $"{connection.Username} created chat {connection.ChatRoomName}");
+                return newChatRoom;
             }
             else
             {
-                await Clients.Caller.SendAsync("ReceiveMessage", "admin", $"Chat {connection.ChatRoomName} already exists");
+                throw new HubException("ROOM_CREATION_FAILED");
             }
         }
 
-        public async Task JoinSpecificChatRoom(UserConnection connection)
+        public async Task<ChatRoom?> JoinChat(UserConnection connection)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, connection.ChatRoomName);
+            Console.WriteLine($"User {connection.Username} próbuje dołączyć do pokoju {connection.ChatRoomId}");
 
+            if (connection.ChatRoomId <= 0)
+            {
+                throw new HubException("INVALID_ROOM_ID");
+            }
+
+            if (!_sharedDb.chatRooms.TryGetValue(connection.ChatRoomId, out var chatRoom))
+            {
+                throw new HubException("ROOM_NOT_FOUND");
+
+            }
+
+            await Groups.AddToGroupAsync(Context.ConnectionId, connection.ChatRoomId.ToString());
             _sharedDb.connections[Context.ConnectionId] = connection;
 
-            await Clients.Group(connection.ChatRoom).
-                SendAsync("ReceiveMessage", "admin", $"{connection.Username} has joined {connection.ChatRoom}");
+            await Clients.Group(connection.ChatRoomId.ToString()).SendAsync("ReceiveMessage", "admin", $"{connection.Username} has joined {chatRoom.Name}");
+
+            return chatRoom;
         }
 
         public async Task SendMessage(string msg)
         {
+            if (string.IsNullOrWhiteSpace(msg))
+            {
+                throw new HubException("EMPTY_MESSAGE");
+            }
             if (_sharedDb.connections.TryGetValue(Context.ConnectionId, out UserConnection conn))
             {
-                await Clients.Group(conn.ChatRoom).SendAsync("ReceiveSpecificMessage", conn.Username, msg);
+                //var chatRoom = _sharedDb.chatRooms[conn.ChatRoomId];
+                //int nextId = chatRoom.Messages.Any() ? chatRoom.Messages.Last().Id + 1 : 1;
+                //var user = _sharedDb.users.Where(n => n.Value.Name == conn.Username);
+                //var message = new Message(nextId, (User)user);
+
+                //message.messageContent = msg;
+
+
+                await Clients.Group(conn.ChatRoomId.ToString()).SendAsync("ReceiveMessage", conn.Username, msg);
+
+                //_sharedDb.chatRooms[conn.ChatRoomId].Messages.Add(message);
+
             }
         }
     }

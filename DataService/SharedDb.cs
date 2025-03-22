@@ -7,11 +7,11 @@ namespace FormulaOne.ChatService.DataService
     {
         private readonly ConcurrentDictionary<string, UserConnection> _connections = new ConcurrentDictionary<string, UserConnection>();
 
-        private readonly ConcurrentDictionary<string, User> _users = new ConcurrentDictionary<string, User>();
-        private readonly ConcurrentDictionary<string, ChatRoom> _chatRooms = new ConcurrentDictionary<string, ChatRoom>();
+        private readonly ConcurrentDictionary<int, User> _users = new ConcurrentDictionary<int, User>();
+        private readonly ConcurrentDictionary<int, ChatRoom> _chatRooms = new ConcurrentDictionary<int, ChatRoom>();
         public ConcurrentDictionary<string, UserConnection> connections => _connections;
-        public ConcurrentDictionary<string, User> users => _users;
-        public ConcurrentDictionary<string, ChatRoom> chatRooms => _chatRooms;
+        public ConcurrentDictionary<int, User> users => _users;
+        public ConcurrentDictionary<int, ChatRoom> chatRooms => _chatRooms;
 
 
 
