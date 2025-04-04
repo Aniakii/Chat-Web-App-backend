@@ -19,7 +19,7 @@ builder.Services.AddCors(opt =>
 {
     opt.AddPolicy("AllowSpecificOrigin", builder =>
     {
-        builder.WithOrigins("http://192.168.1.103:8080", "http://localhost:8080", "http://localhost:3000", "amajka.us-east-1.elasticbeanstalk.com:8080", "amajka.us-east-1.elasticbeanstalk.com:3000", "http://127.0.0.1:3000", $"http://{publicIp}:3000")
+        builder.WithOrigins("http://192.168.1.103:8080", "http://localhost:8080", "http://localhost:3000", "amajka.us-east-1.elasticbeanstalk.com:8080", "amajka.us-east-1.elasticbeanstalk.com:3000", "amajkafront.us-east-1.elasticbeanstalk.com:80", "http://127.0.0.1:3000", $"http://{publicIp}:80")
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();
