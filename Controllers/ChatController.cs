@@ -20,23 +20,42 @@ namespace FormulaOne.ChatService.Controllers
             _hubContext = hubContext;
         }
 
-
         [HttpPost("create")]
-        public IActionResult CreateChat([FromBody] UserConnection connection)
+        public async Task<IActionResult> CreateChat([FromForm] string username, [FromForm] string chatRoomName, IFormFile? imageFile)
         {
-            if (string.IsNullOrWhiteSpace(connection.ChatRoomName))
+            if (string.IsNullOrWhiteSpace(chatRoomName))
             {
                 return BadRequest("EMPTY_ROOM_NAME");
             }
 
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                return BadRequest("EMPTY_USERNAME");
+            }
+
             int nextId = _sharedDb.chatRooms.IsEmpty ? 1 : _sharedDb.chatRooms.Keys.Max() + 1;
 
-            var newChatRoom = new ChatRoom(nextId, connection.ChatRoomName);
+            string? imageBase64 = null;
+            if (imageFile != null)
+            {
+                using var memoryStream = new MemoryStream();
+                await imageFile.CopyToAsync(memoryStream);
+                byte[] imageBytes = memoryStream.ToArray();
+                imageBase64 = Convert.ToBase64String(imageBytes);
+            }
+
+            var newChatRoom = new ChatRoom(nextId, chatRoomName, imageBase64);
 
             if (_sharedDb.chatRooms.TryAdd(nextId, newChatRoom))
             {
-                connection.ChatRoomId = nextId;
-                _sharedDb.connections[connection.Username] = connection;
+                var userConnection = new UserConnection
+                {
+                    Username = username,
+                    ChatRoomId = nextId,
+                    ChatRoomName = chatRoomName
+                };
+
+                _sharedDb.connections[username] = userConnection;
 
                 return Ok(newChatRoom);
             }
@@ -94,6 +113,13 @@ namespace FormulaOne.ChatService.Controllers
             }
 
             return Ok(chatRoom.Messages);
+        }
+
+        [HttpGet("rooms")]
+        public IActionResult GetRooms()
+        {
+            var rooms = _sharedDb.chatRooms.Values.Select(r => new { id = r.Id, name = r.Name }).ToList();
+            return Ok(rooms);
         }
     }
 }
