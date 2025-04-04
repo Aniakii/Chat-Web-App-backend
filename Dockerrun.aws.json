@@ -1,0 +1,23 @@
+{
+  "AWSEBDockerrunVersion": 2,
+  "containerDefinitions": [
+    {
+      "name": "back",
+      "image": "003844427846.dkr.ecr.us-east-1.amazonaws.com/myback:latest",
+      "essential": true,
+      "memory": 512,
+      "portMappings": [
+        {
+          "hostPort": 8080,
+          "containerPort": 8080
+        }
+      ],
+       "environment": [
+    {
+      "name": "PUBLIC_IP",
+      "value": "amajka.us-east-1.elasticbeanstalk.com"
+    }
+  ]
+    }
+  ]
+}
