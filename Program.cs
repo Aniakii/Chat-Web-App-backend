@@ -15,6 +15,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 builder.Services.AddAWSService<IAmazonS3>();
 
+builder.Services.AddScoped<IFileService, S3FileService>();
+
 var publicIp = Environment.GetEnvironmentVariable("PUBLIC_IP") ?? "localhost";
 
 builder.Services.AddCors(opt =>

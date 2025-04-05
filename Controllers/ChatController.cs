@@ -13,11 +13,13 @@ namespace FormulaOne.ChatService.Controllers
     {
         private readonly SharedDb _sharedDb;
         private readonly IHubContext<ChatHub> _hubContext;
+        private readonly IFileService _fileService;
 
-        public ChatController(SharedDb sharedDb, IHubContext<ChatHub> hubContext)
+        public ChatController(SharedDb sharedDb, IHubContext<ChatHub> hubContext, IFileService fileService)
         {
             _sharedDb = sharedDb;
             _hubContext = hubContext;
+            _fileService = fileService;
         }
 
         [HttpPost("create")]
@@ -35,16 +37,25 @@ namespace FormulaOne.ChatService.Controllers
 
             int nextId = _sharedDb.chatRooms.IsEmpty ? 1 : _sharedDb.chatRooms.Keys.Max() + 1;
 
-            string? imageBase64 = null;
+            //string? imageBase64 = null;
+            string? imageUrl = null;
+
             if (imageFile != null)
             {
-                using var memoryStream = new MemoryStream();
-                await imageFile.CopyToAsync(memoryStream);
-                byte[] imageBytes = memoryStream.ToArray();
-                imageBase64 = Convert.ToBase64String(imageBytes);
+                var key = await _fileService.UploadRoomImageAsync(imageFile, nextId);
+                if (key != null)
+                {
+                    var ext = Path.GetExtension(imageFile.FileName);
+                    imageUrl = _fileService.GetImageUrl(nextId, ext);
+                }
+                //using var memoryStream = new MemoryStream();
+                //await imageFile.CopyToAsync(memoryStream);
+                //byte[] imageBytes = memoryStream.ToArray();
+                //imageBase64 = Convert.ToBase64String(imageBytes);
             }
 
-            var newChatRoom = new ChatRoom(nextId, chatRoomName, imageBase64);
+            //var newChatRoom = new ChatRoom(nextId, chatRoomName, imageBase64);
+            var newChatRoom = new ChatRoom(nextId, chatRoomName, imageUrl);
 
             if (_sharedDb.chatRooms.TryAdd(nextId, newChatRoom))
             {

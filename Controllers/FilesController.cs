@@ -25,22 +25,31 @@ namespace FormulaOne.ChatService.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
 
-            if (string.IsNullOrEmpty(idString))
-                return BadRequest("Username is required.");
+            if (id <= 0)
+                return BadRequest("Room id is required.");
 
             var bucketExists = await AmazonS3Util.DoesS3BucketExistV2Async(_s3Client, _bucketName);
             if (!bucketExists) return NotFound($"Bucket {_bucketName} does not exist.");
 
+            var fileExtension = Path.GetExtension(file.FileName);
+            if (string.IsNullOrEmpty(fileExtension))
+                return BadRequest("File must have an extension.");
+
+            var newFileName = $"{id}{fileExtension}";
+
             var request = new PutObjectRequest()
             {
                 BucketName = _bucketName,
-                Key = $"{idString?.TrimEnd('/')}/{file.FileName}",
+                Key = newFileName,
                 InputStream = file.OpenReadStream(),
                 ContentType = file.ContentType
             };
+
             request.Metadata.Add("Content-Type", file.ContentType);
+
             await _s3Client.PutObjectAsync(request);
-            return Ok(new { url = $"{_s3Client.Config.DetermineServiceURL()}/{_bucketName}/{idString?.TrimEnd('/')}/{file.FileName}" });
+            var url = $"{_s3Client.Config.DetermineServiceURL()}/{_bucketName}/{newFileName}";
+            return Ok(new { url });
         }
 
         [HttpGet("get-room-image/{id}")]
