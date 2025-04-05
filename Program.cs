@@ -25,7 +25,7 @@ builder.Services.AddCors(opt =>
     {
         builder.WithOrigins("http://192.168.1.103:8080", "http://localhost:8080",
             "http://localhost:3000", "http://156.17.237.167:80",
-            "http://amajkafront.us-east-1.elasticbeanstalk.com/80",
+            "http://amajkafront.us-east-1.elasticbeanstalk.com:80",
             "amajkafront.us-east-1.elasticbeanstalk.com:80", "http://127.0.0.1:3000", $"http://{publicIp}:80")
             .AllowAnyMethod()
             .AllowAnyHeader()
