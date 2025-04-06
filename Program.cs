@@ -18,11 +18,28 @@ builder.Services.AddAWSService<IAmazonS3>();
 
 builder.Services.AddScoped<IFileService, S3FileService>();
 
-var connectionString = $"Host={Environment.GetEnvironmentVariable("RDS_HOSTNAME")};" +
-                       $"Port={Environment.GetEnvironmentVariable("RDS_PORT")};" +
-                       $"Database={Environment.GetEnvironmentVariable("RDS_DB_NAME")};" +
-                       $"Username={Environment.GetEnvironmentVariable("RDS_USERNAME")};" +
-                       $"Password={Environment.GetEnvironmentVariable("RDS_PASSWORD")};";
+//var test = builder.Configuration.GetSection("Values").GetValue();
+
+//Console.WriteLine("test:");
+//Console.WriteLine(test);
+
+
+//var connectionString = $"Host={Environment.GetEnvironmentVariable("RDS_HOSTNAME")};" +
+//                       $"Port={Environment.GetEnvironmentVariable("RDS_PORT")};" +
+//                       $"Database={Environment.GetEnvironmentVariable("RDS_DB_NAME")};" +
+//                       $"Username={Environment.GetEnvironmentVariable("RDS_USERNAME")};" +
+//                       $"Password={Environment.GetEnvironmentVariable("RDS_PASSWORD")};";
+
+
+
+var connectionString = $"Host={builder.Configuration.GetValue<string>("RDS_HOSTNAME")};" +
+                       $"Port={builder.Configuration.GetValue<string>("RDS_PORT")};" +
+                       $"Database={builder.Configuration.GetValue<string>("RDS_DB_NAME")};" +
+                       $"Username={builder.Configuration.GetValue<string>("RDS_USERNAME")};" +
+                       $"Password={builder.Configuration.GetValue<string>("RDS_PASSWORD")};";
+
+Console.WriteLine("connection string:");
+Console.WriteLine(connectionString);
 
 
 
