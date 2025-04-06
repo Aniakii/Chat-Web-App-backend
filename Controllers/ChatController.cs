@@ -109,7 +109,7 @@ namespace FormulaOne.ChatService.Controllers
             }
 
             var connection = await _dbContext.UsersConnection
-                .FirstOrDefaultAsync(c => c.Username == messageDto.Username);
+                .FirstOrDefaultAsync(c => c.Username == messageDto.Username && c.ChatRoomId == messageDto.RoomId);
 
 
             if (connection == null)
@@ -134,18 +134,8 @@ namespace FormulaOne.ChatService.Controllers
                 );
                 _dbContext.Messages.Add(message);
                 await _dbContext.SaveChangesAsync();
+                await _hubContext.Clients.Group(connection.ChatRoomId.ToString()).SendAsync("ReceiveMessage", connection.Username, messageDto.Content);
 
-                try
-                {
-                    var test1 = _hubContext.Clients.Group(connection.ChatRoomId.ToString());
-                    await test1.SendAsync("ReceiveMessage", connection.Username, messageDto.Content);
-
-                }
-                catch (Exception e)
-                {
-                    var test = e;
-
-                }
                 return Ok(message);
             }
             catch (Exception ex)
@@ -153,7 +143,6 @@ namespace FormulaOne.ChatService.Controllers
                 Console.WriteLine("ERROR: " + ex.Message);
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
-
 
         }
 
