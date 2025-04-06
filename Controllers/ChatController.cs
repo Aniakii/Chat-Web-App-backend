@@ -113,12 +113,22 @@ namespace FormulaOne.ChatService.Controllers
             {
                 return BadRequest("ROOM_NOT_FOUND");
             }
-            var message = new Message(chatRoom.Messages.Count + 1, messageDto.Username, messageDto.Content);
-            chatRoom.Messages.Add(message);
 
-            await _hubContext.Clients.Group(connection.ChatRoomId.ToString()).SendAsync("ReceiveMessage", connection.Username, messageDto.Content);
+            try
+            {
+                var message = new Message(chatRoom.Messages.Count + 1, messageDto.Username, messageDto.Content);
+                chatRoom.Messages.Add(message);
 
-            return Ok(message);
+                await _hubContext.Clients.Group(connection.ChatRoomId.ToString()).SendAsync("ReceiveMessage", connection.Username, messageDto.Content);
+                return Ok(message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ERROR: " + ex.Message);
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+
+
         }
 
 
