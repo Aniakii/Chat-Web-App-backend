@@ -11,9 +11,6 @@ namespace FormulaOne.ChatService.DataService
         public DbSet<UserConnection> UsersConnection { get; set; }
         public DbSet<Message> Messages { get; set; }
 
-        protected AwsDbContext()
-        {
-        }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

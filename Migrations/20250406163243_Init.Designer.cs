@@ -11,8 +11,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FormulaOne.ChatService.Migrations
 {
     [DbContext(typeof(AwsDbContext))]
-    [Migration("20250406151352_AddMessageEntity")]
-    partial class AddMessageEntity
+    [Migration("20250406163243_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
