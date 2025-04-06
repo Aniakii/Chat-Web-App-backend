@@ -6,7 +6,7 @@
         public string Name { get; set; }
         public string? ImageUrl { get; set; }
 
-        public List<Message> Messages { get; set; } = [];
+        public virtual List<Message> Messages { get; set; } = new();
 
         public ChatRoom(int id, string name, string? imageUrl = null) { Id = id; Name = name; ImageUrl = imageUrl; }
     }

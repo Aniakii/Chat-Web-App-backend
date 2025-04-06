@@ -76,20 +76,25 @@ namespace FormulaOne.ChatService.Controllers
         }
 
         [HttpPost("join")]
-        public async Task<IActionResult> JoinChat([FromBody] UserConnection connection)
+        public async Task<IActionResult> JoinChat([FromBody] JoinChatDto joinChatDto)
         {
-            if (connection.ChatRoomId <= 0)
+            if (joinChatDto.ChatRoomId <= 0)
             {
                 return BadRequest("INVALID_ROOM_ID");
             }
 
-            var room = await _dbContext.ChatRooms.FindAsync(connection.ChatRoomId);
+            var room = await _dbContext.ChatRooms.FindAsync(joinChatDto.ChatRoomId);
             if (room == null)
                 return NotFound("ROOM_NOT_FOUND");
-            else
-                connection.ChatRoomName = room.Name;
 
-            _dbContext.UsersConnection.Add(connection);
+            var connection = new UserConnection
+            {
+                Username = joinChatDto.Username,
+                ChatRoomId = joinChatDto.ChatRoomId,
+                ChatRoomName = room.Name
+            };
+
+            await _dbContext.UsersConnection.AddAsync(connection);
             await _dbContext.SaveChangesAsync();
             return Ok(room);
         }
@@ -120,8 +125,15 @@ namespace FormulaOne.ChatService.Controllers
 
             try
             {
-                var message = new Message(chatRoom.Messages.Count + 1, messageDto.Username, messageDto.Content);
-                chatRoom.Messages.Add(message);
+
+                var message = new Message
+                (
+                    messageDto.Username,
+                    messageDto.Content,
+                    chatRoom.Id
+                );
+                _dbContext.Messages.Add(message);
+                await _dbContext.SaveChangesAsync();
 
                 await _hubContext.Clients.Group(connection.ChatRoomId.ToString()).SendAsync("ReceiveMessage", connection.Username, messageDto.Content);
                 return Ok(message);

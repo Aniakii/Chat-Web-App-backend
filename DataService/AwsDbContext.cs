@@ -9,6 +9,7 @@ namespace FormulaOne.ChatService.DataService
         public DbSet<ChatRoom> ChatRooms { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserConnection> UsersConnection { get; set; }
+        public DbSet<Message> Messages { get; set; }
 
         protected AwsDbContext()
         {
@@ -19,6 +20,11 @@ namespace FormulaOne.ChatService.DataService
 
             modelBuilder.Entity<UserConnection>()
                 .HasKey(uc => new { uc.Username, uc.ChatRoomId });
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.ChatRoom)
+                .WithMany(c => c.Messages)
+                .HasForeignKey(m => m.ChatRoomId);
         }
     }
 }

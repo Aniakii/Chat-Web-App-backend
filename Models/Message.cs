@@ -5,6 +5,9 @@
         public int Id { get; set; }
         public string User { get; set; }
         public string MessageContent { get; set; }
-        public Message(int id, string user, string messageContent) { Id = id; User = user; MessageContent = messageContent; }
+
+        public int ChatRoomId { get; set; }
+        public ChatRoom ChatRoom { get; set; }
+        public Message(string user, string messageContent, int chatRoomId) { User = user; MessageContent = messageContent; ChatRoomId = chatRoomId; }
     }
 }
