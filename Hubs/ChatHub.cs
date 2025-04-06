@@ -1,5 +1,4 @@
-﻿using FormulaOne.ChatService.DataService;
-using FormulaOne.ChatService.Models;
+﻿using FormulaOne.ChatService.Models;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.SignalR;
 
@@ -8,11 +7,6 @@ namespace FormulaOne.ChatService.Hubs
     [EnableCors("AllowSpecificOrigin")]
     public class ChatHub : Hub
     {
-        private readonly SharedDb _sharedDb;
-
-        public ChatHub(SharedDb sharedDb) => _sharedDb = sharedDb;
-
-
         public async Task SubscribeChat(UserConnection connection)
         {
 

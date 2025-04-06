@@ -4,6 +4,7 @@ using FormulaOne.ChatService.Hubs;
 using FormulaOne.ChatService.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 
 namespace FormulaOne.ChatService.Controllers
 {
@@ -11,13 +12,13 @@ namespace FormulaOne.ChatService.Controllers
     [Route("api/chat")]
     public class ChatController : ControllerBase
     {
-        private readonly SharedDb _sharedDb;
+        private readonly AwsDbContext _dbContext;
         private readonly IHubContext<ChatHub> _hubContext;
         private readonly IFileService _fileService;
 
-        public ChatController(SharedDb sharedDb, IHubContext<ChatHub> hubContext, IFileService fileService)
+        public ChatController(AwsDbContext dbContext, IHubContext<ChatHub> hubContext, IFileService fileService)
         {
-            _sharedDb = sharedDb;
+            _dbContext = dbContext;
             _hubContext = hubContext;
             _fileService = fileService;
         }
@@ -35,9 +36,8 @@ namespace FormulaOne.ChatService.Controllers
                 return BadRequest("EMPTY_USERNAME");
             }
 
-            int nextId = _sharedDb.chatRooms.IsEmpty ? 1 : _sharedDb.chatRooms.Keys.Max() + 1;
+            var nextId = _dbContext.ChatRooms.Any() ? _dbContext.ChatRooms.Max(c => c.Id) + 1 : 1;
 
-            //string? imageBase64 = null;
             string? imageUrl = null;
 
             if (imageFile != null)
@@ -48,88 +48,93 @@ namespace FormulaOne.ChatService.Controllers
                     var ext = Path.GetExtension(imageFile.FileName);
                     imageUrl = _fileService.GetImageUrl(nextId, ext);
                 }
-                //using var memoryStream = new MemoryStream();
-                //await imageFile.CopyToAsync(memoryStream);
-                //byte[] imageBytes = memoryStream.ToArray();
-                //imageBase64 = Convert.ToBase64String(imageBytes);
             }
 
-            //var newChatRoom = new ChatRoom(nextId, chatRoomName, imageBase64);
             var newChatRoom = new ChatRoom(nextId, chatRoomName, imageUrl);
 
-            if (_sharedDb.chatRooms.TryAdd(nextId, newChatRoom))
+            try
             {
-                var userConnection = new UserConnection
-                {
-                    Username = username,
-                    ChatRoomId = nextId,
-                    ChatRoomName = chatRoomName
-                };
-
-                _sharedDb.connections[username] = userConnection;
-
-                return Ok(newChatRoom);
+                _dbContext.ChatRooms.Add(newChatRoom);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch
+            {
+                return StatusCode(500, "ROOM_CREATION_FAILED");
             }
 
-            return StatusCode(500, "ROOM_CREATION_FAILED");
+            var userConnection = new UserConnection
+            {
+                Username = username,
+                ChatRoomId = nextId,
+                ChatRoomName = chatRoomName
+            };
+
+            _dbContext.UsersConnection.Add(userConnection);
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(newChatRoom);
         }
 
         [HttpPost("join")]
-        public IActionResult JoinChat([FromBody] UserConnection connection)
+        public async Task<IActionResult> JoinChat([FromBody] UserConnection connection)
         {
             if (connection.ChatRoomId <= 0)
             {
                 return BadRequest("INVALID_ROOM_ID");
             }
 
-            if (!_sharedDb.chatRooms.TryGetValue(connection.ChatRoomId, out var chatRoom))
-            {
+            var room = await _dbContext.ChatRooms.FindAsync(connection.ChatRoomId);
+            if (room == null)
                 return NotFound("ROOM_NOT_FOUND");
-            }
 
-            _sharedDb.connections[connection.Username] = connection;
-            return Ok(chatRoom);
+            _dbContext.UsersConnection.Add(connection);
+            await _dbContext.SaveChangesAsync();
+            return Ok(room);
         }
 
 
         [HttpPost("send")]
-        public IActionResult SendMessage([FromBody] MessageDto messageDto)
+        public async Task<IActionResult> SendMessage([FromBody] MessageDto messageDto)
         {
             if (string.IsNullOrWhiteSpace(messageDto.Content))
             {
                 return BadRequest("EMPTY_MESSAGE");
             }
 
-            if (!_sharedDb.connections.TryGetValue(messageDto.Username, out UserConnection conn))
+            var connection = await _dbContext.UsersConnection.FindAsync(messageDto.Username);
+
+            if (connection == null)
             {
                 return Unauthorized("USER_NOT_IN_ROOM");
             }
 
-            var chatRoom = _sharedDb.chatRooms[conn.ChatRoomId];
+            var chatRoom = await _dbContext.ChatRooms.FindAsync(connection.ChatRoomId);
+            if (chatRoom == null)
+            {
+                return BadRequest("ROOM_NOT_FOUND");
+            }
             var message = new Message(chatRoom.Messages.Count + 1, messageDto.Username, messageDto.Content);
             chatRoom.Messages.Add(message);
 
-            _hubContext.Clients.Group(conn.ChatRoomId.ToString()).SendAsync("ReceiveMessage", conn.Username, messageDto.Content);
+            await _hubContext.Clients.Group(connection.ChatRoomId.ToString()).SendAsync("ReceiveMessage", connection.Username, messageDto.Content);
 
             return Ok(message);
         }
 
 
         [HttpGet("messages/{roomId}")]
-        public IActionResult GetMessages(int roomId)
+        public async Task<IActionResult> GetMessages(int roomId)
         {
-            if (!_sharedDb.chatRooms.TryGetValue(roomId, out var chatRoom))
-            {
+            var room = await _dbContext.ChatRooms.FindAsync(roomId);
+            if (room == null)
                 return NotFound("ROOM_NOT_FOUND");
-            }
-
-            return Ok(chatRoom.Messages);
+            return Ok(room.Messages);
         }
 
         [HttpGet("rooms")]
-        public IActionResult GetRooms()
+        public async Task<IActionResult> GetRooms()
         {
-            var rooms = _sharedDb.chatRooms.Values.Select(r => new { id = r.Id, name = r.Name }).ToList();
+            var rooms = await _dbContext.ChatRooms.ToListAsync();
             return Ok(rooms);
         }
     }
