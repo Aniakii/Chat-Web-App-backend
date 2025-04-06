@@ -135,7 +135,17 @@ namespace FormulaOne.ChatService.Controllers
                 _dbContext.Messages.Add(message);
                 await _dbContext.SaveChangesAsync();
 
-                await _hubContext.Clients.Group(connection.ChatRoomId.ToString()).SendAsync("ReceiveMessage", connection.Username, messageDto.Content);
+                try
+                {
+                    var test1 = _hubContext.Clients.Group(connection.ChatRoomId.ToString());
+                    await test1.SendAsync("ReceiveMessage", connection.Username, messageDto.Content);
+
+                }
+                catch (Exception e)
+                {
+                    var test = e;
+
+                }
                 return Ok(message);
             }
             catch (Exception ex)
@@ -154,7 +164,8 @@ namespace FormulaOne.ChatService.Controllers
             var room = await _dbContext.ChatRooms.FindAsync(roomId);
             if (room == null)
                 return NotFound("ROOM_NOT_FOUND");
-            return Ok(room.Messages);
+            var messages = await _dbContext.Messages.Where(m => m.ChatRoomId == roomId).ToListAsync();
+            return Ok(messages);
         }
 
         [HttpGet("rooms")]

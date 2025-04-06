@@ -18,10 +18,6 @@ namespace FormulaOne.ChatService.DataService
             modelBuilder.Entity<UserConnection>()
                 .HasKey(uc => uc.Id);
 
-            modelBuilder.Entity<Message>()
-                .HasOne(m => m.ChatRoom)
-                .WithMany(c => c.Messages)
-                .HasForeignKey(m => m.ChatRoomId);
         }
     }
 }

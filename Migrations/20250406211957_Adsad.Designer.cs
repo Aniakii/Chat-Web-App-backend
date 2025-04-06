@@ -3,6 +3,7 @@ using System;
 using FormulaOne.ChatService.DataService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FormulaOne.ChatService.Migrations
 {
     [DbContext(typeof(AwsDbContext))]
-    partial class AwsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250406211957_Adsad")]
+    partial class Adsad
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
