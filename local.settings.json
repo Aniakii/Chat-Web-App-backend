@@ -1,0 +1,5 @@
+{
+    "ConnectionStrings": {
+        "DefaultConnection": "Host=awseb-e-svwfm73p6y-stack-awsebrdsdatabase-kalnmvibxrc5.cdkkewppr3r2.us-east-1.rds.amazonaws.com;Port=5432;Database=awseb-e-svwfm73p6y-stack-awsebrdsdatabase-kalnmvibxrc5;Username=adminadmin;Password=adminadmin"
+    }
+}

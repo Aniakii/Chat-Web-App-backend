@@ -16,7 +16,7 @@ namespace FormulaOne.ChatService.DataService
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<UserConnection>()
-                .HasKey(uc => new { uc.Username, uc.ChatRoomId });
+                .HasKey(uc => uc.Id);
 
             modelBuilder.Entity<Message>()
                 .HasOne(m => m.ChatRoom)
