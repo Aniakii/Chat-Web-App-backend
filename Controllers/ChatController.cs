@@ -86,6 +86,8 @@ namespace FormulaOne.ChatService.Controllers
             var room = await _dbContext.ChatRooms.FindAsync(connection.ChatRoomId);
             if (room == null)
                 return NotFound("ROOM_NOT_FOUND");
+            else
+                connection.ChatRoomName = room.Name;
 
             _dbContext.UsersConnection.Add(connection);
             await _dbContext.SaveChangesAsync();
@@ -101,7 +103,9 @@ namespace FormulaOne.ChatService.Controllers
                 return BadRequest("EMPTY_MESSAGE");
             }
 
-            var connection = await _dbContext.UsersConnection.FindAsync(messageDto.Username);
+            var connection = await _dbContext.UsersConnection
+                .FirstOrDefaultAsync(c => c.Username == messageDto.Username);
+
 
             if (connection == null)
             {
