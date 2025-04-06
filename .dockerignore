@@ -20,6 +20,10 @@
 **/npm-debug.log
 **/obj
 **/secrets.dev.yaml
+*.user
+*.suo
+*.db
+*.sqlite
 **/values.dev.yaml
 LICENSE
 README.md
